@@ -34,18 +34,20 @@ by following the steps below you can manually install Prayer Times:
   }
   `
 6. Next open up `~/.config/powerline/colorschemes` and add the following lines to the end of the `groups` section:
-  `
-  ,"prayer_times":              { "fg": "green", "bg": "gray2", "attr": [] },
-  "prayer_times_critical":     { "fg": "red", "bg": "gray2", "attr": [] },
-  "prayer_times_warning":    { "fg": "brightyellow", "bg": "gray2", "attr": [] }
-  `
+```
+,"prayer_times":              { "fg": "green", "bg": "gray2", "attr": [] },
+"prayer_times_critical":     { "fg": "red", "bg": "gray2", "attr": [] },
+"prayer_times_warning":    { "fg": "brightyellow", "bg": "gray2", "attr": [] }
+```
 7. Finally add `Prayer times` to your `Powerline` theme:
-    {
-      "function": "pryr.prayer_time",
-      "priority": 50,
-      "args": {
-        "location_query": "cairo, eg",
-        "timezone": 2,
-        "method": 5
-      }
+```
+  {
+    "function": "pryr.prayer_time",
+    "priority": 50,
+    "args": {
+      "location_query": "cairo, eg",
+      "timezone": 2,
+      "method": 5
     }
+  }
+```
