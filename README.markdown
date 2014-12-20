@@ -40,12 +40,12 @@ by following the steps below you can manually install Prayer Times:
   "prayer_times_warning":    { "fg": "brightyellow", "bg": "gray2", "attr": [] }
   `
 7. Finally add `Prayer times` to your `Powerline` theme:
-  {
-    "function": "pryr.prayer_time",
-    "priority": 50,
-    "args": {
-      "location_query": "cairo, eg",
-      "timezone": 2,
-      "method": 5
+    {
+      "function": "pryr.prayer_time",
+      "priority": 50,
+      "args": {
+        "location_query": "cairo, eg",
+        "timezone": 2,
+        "method": 5
+      }
     }
-  }
