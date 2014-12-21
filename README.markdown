@@ -51,3 +51,8 @@ by following the steps below you can manually install Prayer Times:
     }
   }
 ```
+
+Screenshot
+----------
+
+![Preview](https://raw.githubusercontent.com/cousine/powerline_prayers/master/preview.png)
