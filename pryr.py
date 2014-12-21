@@ -1,4 +1,4 @@
-# vim:filenecoding=utf-8:noet
+# vim:fileencoding=utf-8:noet
 
 # A prayer times segment for Powerline (https://github.com/powerline/powerline/)
 # 
@@ -11,6 +11,7 @@ from __future__ import (unicode_literals, division, absolute_import, print_funct
 import json
 import time
 import math
+import operator
 
 from datetime import datetime, timedelta
 
@@ -21,7 +22,6 @@ from powerline.segments import with_docstring
 class PrayerTimeSegment(KwThreadedSegment):
     interval = 600
     current_date_time = datetime.today()
-    default_location = None
     location_geometries = {}
     prayer_times = {}
 
@@ -36,21 +36,25 @@ class PrayerTimeSegment(KwThreadedSegment):
             if location_query is None:
                 self.error('No location specified')
             else:
-                location = location_query.split(',')
-                query_data = {
-                        'address':  location[0],
-                        'region':   location[1],
-                        'sensor':   'false'
-                }
+		location = location_query.split(',')
+		query_data = {
+			'address':  location[0],
+			'region':   location[1],
+			'sensor':   'false'
+		}
 
-                location_data = json.loads(urllib_read('http://maps.google.com/maps/api/geocode/json?' + urllib_urlencode(query_data)))
-                location = ','.join((
-                    str(location_data['results'][0]['geometry']['location']['lat']), 
-                    str(location_data['results'][0]['geometry']['location']['lng'])
-                ))
+		location_data = json.loads(urllib_read('http://maps.google.com/maps/api/geocode/json?' + urllib_urlencode(query_data)))
+		if location_data['results']:
+		    location = ','.join((
+			str(location_data['results'][0]['geometry']['location']['lat']), 
+			str(location_data['results'][0]['geometry']['location']['lng'])
+		    ))
 
-                self.location_geometries[location_query] = geometry = location
-                return geometry
+		    self.location_geometries[location_query] = geometry = location
+		    return geometry
+		else:
+		    self.location_geometries['cairo, eg'] = geometry = '30.0444196,31.2357116'
+		    return geometry
 
     def get_prayer_times(self, prayer_tuple):
         timestamp = long(math.ceil(time.time()))
@@ -58,7 +62,13 @@ class PrayerTimeSegment(KwThreadedSegment):
         if (datetime.fromtimestamp(timestamp) - self.current_date_time).days == 0 and self.prayer_times:
             return self.prayer_times
 
-        geometry = self.get_geometry(prayer_tuple[0]).split(',')
+	geometry = self.get_geometry(prayer_tuple[0])
+
+	if geometry is not None:
+	    geometry = geometry.split(',')
+	else:
+	    return None
+
         query_data = {
             'latitude': geometry[0],
             'longitude': geometry[1],
@@ -81,27 +91,36 @@ class PrayerTimeSegment(KwThreadedSegment):
             self.exception('Al Adhan returned a malformed or unrexpected response: {0}', repr(raw_response))
             return None
 
-        return self.prayer_times
+        self.prayer_times = sorted(self.prayer_times.items(), key=operator.itemgetter(1))
+
+	return self.prayer_times
+
+    def calculate_next_prayer(self, ptime, time_now, prayer):
+	delta_time = ptime - time_now
+	hours, remainder = divmod(delta_time.seconds, 3600)
+	minutes, seconds = divmod(remainder, 60)
+
+	if prayer == "Maghrib" or prayer == "Isha":
+	    icon_name = "dark"
+	else:
+	    icon_name = "light"
+
+	return (prayer, hours, minutes, icon_name)
 
     def compute_state(self, prayer_tuple):
         time_now = datetime.now()
         present_prayer = None
 
         if self.get_prayer_times(prayer_tuple):
-            for prayer, ptime in self.prayer_times.iteritems():
+            for prayer, ptime in self.prayer_times:
                 if time_now >= ptime:
                     present_prayer = prayer
                 elif time_now < ptime and present_prayer:
-                    delta_time = ptime - time_now
-                    hours, remainder = divmod(delta_time.seconds, 3600)
-                    minutes, seconds = divmod(remainder, 60)
-
-                    if prayer == "Maghrib" or prayer == "Isha":
-                        icon_name = "dark"
-                    else:
-                        icon_name = "light"
-
-                    return (prayer, hours, minutes, icon_name)
+		    return self.calculate_next_prayer(ptime, time_now, prayer)
+		elif (self.current_date_time - time_now).days != 1:
+		    self.current_date_time = time_now + timedelta(days= 1)
+		else:
+		    self.calculate_next_prayer(self.prayer_times["Fajr"], time_now, "Fajr")
         else:
             return None
 
