@@ -20,7 +20,7 @@ from powerline.lib.threaded import KwThreadedSegment
 from powerline.segments import with_docstring
 
 class PrayerTimeSegment(KwThreadedSegment):
-    interval = 1000
+    interval = 600
     current_date_time = datetime.today()
     location_geometries = {}
     prayer_times = {}
