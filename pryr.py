@@ -20,7 +20,7 @@ from powerline.lib.threaded import KwThreadedSegment
 from powerline.segments import with_docstring
 
 class PrayerTimeSegment(KwThreadedSegment):
-    interval = 600
+    interval = 1000
     current_date_time = datetime.today()
     location_geometries = {}
     prayer_times = {}
@@ -120,7 +120,7 @@ class PrayerTimeSegment(KwThreadedSegment):
 		elif (self.current_date_time - time_now).days != 1:
 		    self.current_date_time = time_now + timedelta(days= 1)
 		else:
-		    self.calculate_next_prayer(self.prayer_times["Fajr"], time_now, "Fajr")
+		    return self.calculate_next_prayer(self.prayer_times[0][1], time_now, "Fajr")
         else:
             return None
 
