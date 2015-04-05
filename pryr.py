@@ -20,14 +20,14 @@ from powerline.lib.threaded import KwThreadedSegment
 from powerline.segments import with_docstring
 
 class PrayerTimeSegment(KwThreadedSegment):
-    interval = 600
+    interval = 10000
     current_date_time = datetime.today()
     location_geometries = {}
     prayer_times = {}
 
     @staticmethod
-    def key(location_query=None, timezone=2, method=5, **kwargs):
-        return (location_query, timezone, method)
+    def key(location_query=None, timezonestring="Africa/Cairo", method=5, **kwargs):
+        return (location_query, timezonestring, method)
 
     def get_geometry(self, location_query):
         try:
@@ -43,23 +43,34 @@ class PrayerTimeSegment(KwThreadedSegment):
 			'sensor':   'false'
 		}
 
-		location_data = json.loads(urllib_read('http://maps.google.com/maps/api/geocode/json?' + urllib_urlencode(query_data)))
-		if location_data['results']:
-		    location = ','.join((
-			str(location_data['results'][0]['geometry']['location']['lat']), 
-			str(location_data['results'][0]['geometry']['location']['lng'])
-		    ))
+		try:
+		    location_data = json.loads(urllib_read('http://maps.google.com/maps/api/geocode/json?' + urllib_urlencode(query_data)))
+		    if location_data['results']:
+			location = ','.join((
+			    str(location_data['results'][0]['geometry']['location']['lat']), 
+			    str(location_data['results'][0]['geometry']['location']['lng'])
+			))
 
-		    self.location_geometries[location_query] = geometry = location
-		    return geometry
-		else:
+			self.location_geometries[location_query] = geometry = location
+			return geometry
+		    else:
+			self.location_geometries['cairo, eg'] = geometry = '30.0444196,31.2357116'
+			return geometry
+		except:
+		    self.warn("Something went wrong while calculating location")
 		    self.location_geometries['cairo, eg'] = geometry = '30.0444196,31.2357116'
-		    return geometry
+		    return self.location_geometries['cairo, eg']
 
     def get_prayer_times(self, prayer_tuple):
         timestamp = long(math.ceil(time.time()))
-
-        if (datetime.fromtimestamp(timestamp) - self.current_date_time).days == 0 and self.prayer_times:
+	getPrayers = False
+	if not self.prayer_times:
+	    getPrayers = True
+	else:
+	    if not ((datetime.fromtimestamp(timestamp) - self.current_date_time).days == 0):
+		getPrayers = True
+	
+        if not getPrayers:
             return self.prayer_times
 
 	geometry = self.get_geometry(prayer_tuple[0])
@@ -72,7 +83,7 @@ class PrayerTimeSegment(KwThreadedSegment):
         query_data = {
             'latitude': geometry[0],
             'longitude': geometry[1],
-            'timezone': prayer_tuple[1],
+            'timezonestring': prayer_tuple[1],
             'method': prayer_tuple[2]
         }
 
@@ -165,8 +176,8 @@ prayer_time = with_docstring(PrayerTimeSegment(),
 
 :param str location_query:
     location query for your current location, e.g. ``cairo, eg``
-:param int timezone:
-    your timezone in int, valid values are from -12 to 12
+:param string timezonestring:
+    A valid timezone name as specified on http://php.net/manual/en/timezones.php. Example: Europe/London
 :param int method:
     prayer time calculation method, valid values are from 0 to 7 (for more information check http://aladhan.com/rest-api)
 

@@ -46,7 +46,7 @@ by following the steps below you can manually install Prayer Times:
     "priority": 50,
     "args": {
       "location_query": "cairo, eg",
-      "timezone": 2,
+      "timezonestring": "Africa/Cairo",
       "method": 5
     }
   }
